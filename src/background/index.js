@@ -8,6 +8,13 @@ chrome.runtime.onConnect.addListener((port) => {
     port.onMessage.addListener(async (msg) => {
       try {
         const res = await fetch(msg.url, msg.options);
+        
+        if (!res.ok) {
+          const errText = await res.text();
+          port.postMessage({ type: 'ERROR', error: `HTTP ${res.status}: ${errText}` });
+          return;
+        }
+
         port.postMessage({
           type: 'RESPONSE_START',
           status: res.status,

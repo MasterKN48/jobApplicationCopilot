@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Save, User, Key, Link } from 'lucide-react';
+import { Save, User, Key, Link, Settings } from 'lucide-react';
 
 export default function Options() {
   const [formData, setFormData] = useState({
+    emailId: '',
+    phoneNo: '',
     linkedinUrl: '',
     githubUrl: '',
     portfolioUrl: '',
     resumeText: '',
     resumeFileName: '',
     resumeBase64: '',
+    autoSubmit: false,
     apiKey: '',
-    baseURL: 'https://api.openai.com/v1',
-    model: 'gpt-4o'
+    baseURL: 'http://127.0.0.1:1234/v1',
+    model: 'google/gemma-4-e4b'
   });
   const [saved, setSaved] = useState(false);
 
@@ -24,8 +27,8 @@ export default function Options() {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleFileUpload = (e) => {
@@ -50,15 +53,51 @@ export default function Options() {
     });
   };
 
+  const handleStart = async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab) {
+      chrome.tabs.sendMessage(tab.id, { type: 'START_APPLICATION' });
+    } else {
+      alert("No active tab found");
+    }
+  };
+
   return (
     <div className="options-container">
       <div className="header">
-        <h1>Job Application Copilot Configuration</h1>
-        <p>Set up your profile and API keys to automate your job applications.</p>
+        <h1>Job Application Copilot</h1>
+        <p>Set up your profile and click Auto-Fill on a job application page.</p>
+        <button 
+          className="btn" 
+          onClick={handleStart} 
+          style={{ marginTop: '16px', background: 'linear-gradient(135deg, #10b981, #059669)', width: '100%', justifyContent: 'center' }}
+        >
+          Auto-Fill Application
+        </button>
       </div>
 
       <div className="section">
         <h2><User size={20} /> Personal Information</h2>
+        <div className="form-group">
+          <label>Email ID</label>
+          <input 
+            type="email" 
+            name="emailId"
+            value={formData.emailId}
+            onChange={handleChange}
+            placeholder="you@example.com" 
+          />
+        </div>
+        <div className="form-group">
+          <label>Phone Number</label>
+          <input 
+            type="tel" 
+            name="phoneNo"
+            value={formData.phoneNo}
+            onChange={handleChange}
+            placeholder="+1 555-000-0000" 
+          />
+        </div>
         <div className="form-group">
           <label>LinkedIn URL</label>
           <input 
@@ -110,6 +149,22 @@ export default function Options() {
             onChange={handleChange}
             placeholder="Paste your resume text here. This will be used by the agent to answer form questions."
           />
+        </div>
+      </div>
+
+      <div className="section">
+        <h2><Settings size={20} /> Automation Settings</h2>
+        <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <input 
+            type="checkbox" 
+            name="autoSubmit"
+            checked={formData.autoSubmit}
+            onChange={handleChange}
+            style={{ width: '20px', height: '20px', margin: 0, cursor: 'pointer' }}
+          />
+          <label style={{ margin: 0, marginLeft: '12px', cursor: 'pointer', lineHeight: '1.4' }}>
+            Automatically click the final <b>Submit</b> or <b>Apply</b> button when finished
+          </label>
         </div>
       </div>
 
